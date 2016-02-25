@@ -47,6 +47,7 @@ class ReflexAgent(Agent):
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
 
+        
         "Add more of your code here if you want to"
 
         return legalMoves[chosenIndex]
@@ -74,7 +75,31 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        ma = 1000000
+        min = -1000000
+        
+        # Don't want pacman to stop at all
+        if action == Directions.STOP:
+            return min
+
+        for ghost in newGhostStates:
+            gpos = ghostState.getPosition()           
+            
+            if gpos == newPos:
+                # If the ghost is scared eat it
+                if ghostState.scaredTimer > 0:
+                    return ma
+                 # Otherwise avoid at all cost!
+                else:
+                    return min
+        dist = []            
+        for pos in currentGameState.getFood().asList():
+            # The closer the food the smaller the manhattan distance is, 
+            # so to make it larger than farther food just make it negative
+            md = util.manhattanDistance(newPos, pos) * -1            
+            dist.append(md)
+
+        return max(dist)
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -129,7 +154,36 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+      
+        util.raiseNotDefined(a)
+
+'''
+def value(state):
+
+    if the state is a terminal state:
+        # return self.evaluationFunction(state)
+        return the states utility
+
+    # If it's pacman's turn
+    if the next agent is MAX:    
+        return max - value(state)
+
+    # If it's the Ghost's turn
+    if the next agent is MIN:
+        return min - value(state)
+
+def max_value(state):    
+    ititialize v = -inifinity
+    for each successor of state:
+        v = max(v, min - value(successor))
+        return v
+
+def min_value(state):
+    initialize v = +infinity 
+    for each successor of state:
+        v = min(v, max - value(successor))
+        return v
+'''
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
@@ -156,7 +210,51 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
+
+        '''
+        gameState.getLegalActions(agentIndex):                                                                                                                                   
+            Returns a list of legal actions for an agent                                                                                                                           
+            agentIndex=0 means Pacman, ghosts are >= 1                                                                                                                             
+                                                                                                                                                                                   
+          gameState.generateSuccessor(agentIndex, action):                                                                                                                         
+            Returns the successor game state after an agent takes an action                                                                                                        
+                                                                                                                                                                                   
+          gameState.getNumAgents():                                                                                                                                                
+            Returns the total number of agents in the game
+        '''
+        pacActions = gameState.getLegalActions(0) # Pacman's legal actions
+        numAgents = gameState.getNumAgents()
+        successor = gameState.generateSuccessor(0, pacActions[0]) #Pacman's first legal action
+        depth = self.depth
+
+        import pdb; pdb.set_trace()
         util.raiseNotDefined()
+        '''
+    def value(self, s):
+        if s is a max node:
+            return maxValue(s)  
+        if s is an exp node:
+            return expValue(s)
+        if s is a terminal node:
+            return evaluation(s)
+
+    def maxValue(self, successor):
+        values = []
+        for s in successors(successor):
+            values.append(value(s))
+        return max(values)
+
+    def expValue(self, s):
+        values = 0
+        sccr = successors(s)
+        for s in sccr:
+            p = probability(len(sccr))
+            v += p * value(s)
+
+        return v
+        '''
+    def probability(length):
+        return 1/length
 
 def betterEvaluationFunction(currentGameState):
     """
