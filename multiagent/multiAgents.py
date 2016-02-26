@@ -153,37 +153,55 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
+        # use minimax to find the immediate action that can result in the
+        # best reward. begin by maximizing pacman (agent index = 0)
         bestValue, bestAction = self.minimax(gameState, self.depth, 0)
         return bestAction
 
+    # gets the optimized leaf value and the immediate move that can be made
+    # to achieve that reward
     def minimax(self, gameState, depth, maximizingAgentIndex):
+        # gets the list of moves that can be made from this state
         actions = gameState.getLegalActions(maximizingAgentIndex)
+
+        # base case - we've recursed as far as we want, or can
         if depth == 0 or len(actions) == 0:
             return self.evaluationFunction(gameState), None
 
-        if maximizingAgentIndex == 1:
+        # depth counts as a pacman action and a response from all ghosts
+        # only decrease the depth if we're working with the last ghost
+        if maximizingAgentIndex == gameState.getNumAgents() - 1:
             depth = depth - 1
 
-        if maximizingAgentIndex == 0:   # maximizing pacman value
-            bestValue = -sys.maxint - 1 # smallest integer value
-            bestAction = actions[0]     # initialize action variable
-            for action in actions:
-                childState = gameState.generateSuccessor(maximizingAgentIndex, action)
-                value, a = self.minimax(childState, depth, gameState.getNumAgents() - 1)
-                bestValue = max(bestValue, value)
-                if value == bestValue:
-                    bestAction = action
-            return bestValue, bestAction
-        else:                           # minimizing ghost value
-            bestValue = sys.maxint      # biggest integer value
-            bestAction = actions[0]     # initialize action variable
-            for action in actions:
-                childState = gameState.generateSuccessor(maximizingAgentIndex, action)
-                value, a = self.minimax(childState, depth, maximizingAgentIndex - 1)
-                bestValue = min(bestValue, value)
-                if value == bestValue:
-                    bestAction = action
-            return bestValue, bestAction
+        # get the index for the next agent to recurse on
+        nextAgentIndex = (maximizingAgentIndex + 1) % (gameState.getNumAgents())
+
+        # if the current agent is 0 (pacman) we want to maximze the value
+        # but if the current agent is a ghost, we want to minimize it
+        if maximizingAgentIndex == 0:
+            bestValue = -sys.maxint - 1       # smallest integer value
+            minormax = lambda x, y: max(x, y) # want to take the max
+        else:
+            bestValue = sys.maxint            # biggest integer value
+            minormax = lambda x, y: min(x, y) # want to take the min
+
+        # we will recurse through all possible actions to find the action
+        # that minimizes or maximizes the value
+        bestAction = actions[0]               # initialize action variable
+        for action in actions:
+            # get the child game state for the current agent in a direction
+            childState = gameState.generateSuccessor(maximizingAgentIndex, action)
+
+            # we only care about the immediate action to get toward the
+            # leaf node. so we ditch the action from the state below
+            value, _ = self.minimax(childState, depth, nextAgentIndex)
+
+            # depending on the agent, maximize or minimize the value
+            bestValue = minormax(bestValue, value)
+            if value == bestValue:
+                bestAction = action
+
+        return bestValue, bestAction
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
