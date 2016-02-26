@@ -14,7 +14,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util
+import random, util, sys
 
 from game import Agent
 
@@ -131,11 +131,11 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+
 class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
     """
-
     def getAction(self, gameState):
         """
           Returns the minimax action from the current gameState using self.depth
@@ -153,37 +153,38 @@ class MinimaxAgent(MultiAgentSearchAgent):
           gameState.getNumAgents():
             Returns the total number of agents in the game
         """
-        "*** YOUR CODE HERE ***"
-      
-        util.raiseNotDefined(a)
+        bestValue, bestAction = self.minimax(gameState, self.depth, 0)
+        return bestAction
 
-'''
-def value(state):
+    def minimax(self, gameState, depth, maximizingAgentIndex):
+        actions = gameState.getLegalActions(maximizingAgentIndex)
+        if depth == 0 or len(actions) == 0:
+            return self.evaluationFunction(gameState), None
 
-    if the state is a terminal state:
-        # return self.evaluationFunction(state)
-        return the states utility
+        if maximizingAgentIndex == 1:
+            depth = depth - 1
 
-    # If it's pacman's turn
-    if the next agent is MAX:    
-        return max - value(state)
+        if maximizingAgentIndex == 0:   # maximizing pacman value
+            bestValue = -sys.maxint - 1 # smallest integer value
+            bestAction = actions[0]     # initialize action variable
+            for action in actions:
+                childState = gameState.generateSuccessor(maximizingAgentIndex, action)
+                value, a = self.minimax(childState, depth, gameState.getNumAgents() - 1)
+                bestValue = max(bestValue, value)
+                if value == bestValue:
+                    bestAction = action
+            return bestValue, bestAction
+        else:                           # minimizing ghost value
+            bestValue = sys.maxint      # biggest integer value
+            bestAction = actions[0]     # initialize action variable
+            for action in actions:
+                childState = gameState.generateSuccessor(maximizingAgentIndex, action)
+                value, a = self.minimax(childState, depth, maximizingAgentIndex - 1)
+                bestValue = min(bestValue, value)
+                if value == bestValue:
+                    bestAction = action
+            return bestValue, bestAction
 
-    # If it's the Ghost's turn
-    if the next agent is MIN:
-        return min - value(state)
-
-def max_value(state):    
-    ititialize v = -inifinity
-    for each successor of state:
-        v = max(v, min - value(successor))
-        return v
-
-def min_value(state):
-    initialize v = +infinity 
-    for each successor of state:
-        v = min(v, max - value(successor))
-        return v
-'''
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
