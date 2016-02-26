@@ -283,52 +283,66 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           All ghosts should be modeled as choosing uniformly at random from their
           legal moves.
         """
-        "*** YOUR CODE HERE ***"
+        # finds the immediate action that can result in the best reward using
+        # the expectimax algorithm
+        bestValue, bestAction = self.expectimax(gameState, self.depth, 0)
+        return bestAction
 
-        '''
-        gameState.getLegalActions(agentIndex):                                                                                                                                   
-            Returns a list of legal actions for an agent                                                                                                                           
-            agentIndex=0 means Pacman, ghosts are >= 1                                                                                                                             
-                                                                                                                                                                                   
-          gameState.generateSuccessor(agentIndex, action):                                                                                                                         
-            Returns the successor game state after an agent takes an action                                                                                                        
-                                                                                                                                                                                   
-          gameState.getNumAgents():                                                                                                                                                
-            Returns the total number of agents in the game
-        '''
-        pacActions = gameState.getLegalActions(0) # Pacman's legal actions
-        numAgents = gameState.getNumAgents()
-        successor = gameState.generateSuccessor(0, pacActions[0]) #Pacman's first legal action
-        depth = self.depth
+    # get the maximized value of the averaged values of each player resulting
+    # in the best immediate move for pacman
+    def expectimax(self, gameState, depth, maximizingAgentIndex):
+        # gets the list of possible actions from the current state
+        actions = gameState.getLegalActions(maximizingAgentIndex)
 
-        #import pdb; pdb.set_trace()
-        util.raiseNotDefined()
-        '''
-    def value(self, s):
-        if s is a max node:
-            return maxValue(s)  
-        if s is an exp node:
-            return expValue(s)
-        if s is a terminal node:
-            return evaluation(s)
+        # the base case - if we have recursed as far as we can go or as far as
+        # we want to go
+        if depth == 0 or len(actions) == 0:
+            return self.evaluationFunction(gameState), None
 
-    def maxValue(self, successor):
+        # a depth of 1 means that pacman has moved as well as every other ghost
+        # so we only want to update the depth after all agents have moved (when
+        # we're currently looking at the last agent)
+        if maximizingAgentIndex == gameState.getNumAgents() - 1:
+            depth = depth - 1
+
+        # update the index of the next agent. if we're at the last agent roll over
+        # to agent with index of 0 (pacman)
+        nextAgentIndex = (maximizingAgentIndex + 1) % (gameState.getNumAgents())
+
+        # if we're currently looking at agent 0 (pacman) we want to maximize the
+        # reward. so we initialize a lambda function to maximize the values. when
+        # we're looking at a ghost we want to average all of the values
+        if maximizingAgentIndex == 0:
+            # want to take the max from a list
+            maxoravg = lambda vals: max(vals)
+        else:
+            # want to take the avg from a list
+            maxoravg = lambda vals: (sum(vals) * 1.0) / (len(vals) * 1.0)
+
+        # we recursively find the values of all of the child game states and add the
+        # values to a list
         values = []
-        for s in successors(successor):
-            values.append(value(s))
-        return max(values)
+        for action in actions:
+            # get the child game state for the current agent in each possible direction
+            childState = gameState.generateSuccessor(maximizingAgentIndex, action)
 
-    def expValue(self, s):
-        values = 0
-        sccr = successors(s)
-        for s in sccr:
-            p = probability(len(sccr))
-            v += p * value(s)
+            # get the value of the child game state (averaged or max depending on agent)
+            value, _ = self.expectimax(childState, depth, nextAgentIndex)
+            values.append(value)
 
-        return v
-        '''
-    def probability(length):
-        return 1/length
+        # get either the maximum value from all of the child game states (when pacman)
+        # or the average value of all of the child game state (when any of the ghosts)
+        bestValue = maxoravg(values)
+        bestAction = None
+
+        # can only return a definitive action to take on pacman's turn. we can't really
+        # return an action for pacman to take when we've average the ghosts moves...
+        if maximizingAgentIndex == 0:
+            # get the action that corresponds with the maximized value
+            i = values.index(bestValue)
+            bestAction = actions[i]
+
+        return bestValue, bestAction
 
 
 def betterEvaluationFunction(currentGameState):
@@ -338,7 +352,49 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    import pdb; pdb.set_trace()
+    return 10
+    #### does not work well...
+    #avg = lambda vals: (sum(vals) * 1.0) / (len(vals) * 1.0)
+    #maxInt = sys.maxint
+    #minInt = -sys.maxint - 1
+    #values = []
+
+    #curPos = currentGameState.getPacmanPosition()
+    #curFood = currentGameState.getFood().asList()
+
+    #actions = currentGameState.getLegalActions(0)
+    #for action in actions:
+    #    childState = currentGameState.generatePacmanSuccessor(action)
+    #    newPos = childState.getPacmanPosition()
+    #    newGhostStates = childState.getGhostStates()
+    #    for ghostState in newGhostStates:
+    #        gpos = ghostState.getPosition()
+    #        if gpos == newPos:
+    #            # If the ghost is scared eat it
+    #            if ghostState.scaredTimer > 0:
+    #                values.append(maxInt / len(actions))
+    #             # Otherwise avoid at all cost!
+    #            else:
+    #                return minInt
+    #                #values.append(minInt / len(actions))
+
+    #    if newPos in childState.getFood().asList():
+    #        return maxInt
+    #        #values.append(maxInt / len(actions))
+
+    #curGhosts = currentGameState.getGhostStates()
+    #for ghostState in curGhosts:
+    #    gpos = ghostState.getPosition()
+    #    if gpos == curPos:
+    #        values.append(minInt)
+
+    #if curPos in curFood:
+    #    values.append(maxInt)
+
+    #if len(values) == 0:
+    #    return 0
+    #return avg(values)
+
 
 
 # Abbreviation
