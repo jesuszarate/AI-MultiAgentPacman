@@ -28,7 +28,6 @@ class ReflexAgent(Agent):
       headers.
     """
 
-
     def getAction(self, gameState):
         """
         You do not need to change this method, but you're welcome to.
@@ -46,11 +45,8 @@ class ReflexAgent(Agent):
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
-
-        
-        "Add more of your code here if you want to"
-
         return legalMoves[chosenIndex]
+
 
     def evaluationFunction(self, currentGameState, action):
         """
@@ -67,31 +63,27 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
-        # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        ma = 1000000
-        min = -1000000
-        
+        minInt = -sys.maxint - 1
+        maxInt = sys.maxint
+
         # Don't want pacman to stop at all
         if action == Directions.STOP:
-            return min
+            return minInt
 
-        for ghost in newGhostStates:
+        for ghostState in newGhostStates:
             gpos = ghostState.getPosition()           
-            
             if gpos == newPos:
                 # If the ghost is scared eat it
                 if ghostState.scaredTimer > 0:
-                    return ma
+                    return maxInt
                  # Otherwise avoid at all cost!
                 else:
-                    return min
+                    return minInt
+
         dist = []            
         for pos in currentGameState.getFood().asList():
             # The closer the food the smaller the manhattan distance is, 
@@ -100,6 +92,7 @@ class ReflexAgent(Agent):
             dist.append(md)
 
         return max(dist)
+
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -110,6 +103,7 @@ def scoreEvaluationFunction(currentGameState):
       (not reflex agents).
     """
     return currentGameState.getScore()
+
 
 class MultiAgentSearchAgent(Agent):
     """
@@ -208,13 +202,74 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     """
       Your minimax agent with alpha-beta pruning (question 3)
     """
-
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # finds the immediate action that can result in the best reward using
+        # alpha beta pruning.
+        bestValue, bestAction = self.alphabeta(gameState, self.depth, 0)
+        return bestAction
+
+    # an alpha beta optimized version of minimax with variable depth and multiple agents
+    def alphabeta(self, gameState, depth, maximizingAgentIndex, alpha=(-sys.maxint - 1), beta=(sys.maxint)):
+        # gets the list of possible actions from the current state
+        actions = gameState.getLegalActions(maximizingAgentIndex)
+
+        # the base case - if we have recursed as far as we can go or as far as
+        # we want to go
+        if depth == 0 or len(actions) == 0:
+            return self.evaluationFunction(gameState), None
+
+        # a depth of 1 means that pacman has moved as well as every other ghost
+        # so we only want to update the depth after all agents have moved (when
+        # we're currently looking at the last agent)
+        if maximizingAgentIndex == gameState.getNumAgents() - 1:
+            depth = depth - 1
+
+        # update the index of the next agent. if we're at the last agent roll over
+        # to agent with index of 0 (pacman)
+        nextAgentIndex = (maximizingAgentIndex + 1) % (gameState.getNumAgents())
+
+        # if we're currently looking at agent 0 (pacman) we want to maximize the
+        # reward. so we initialize all of the parameters for maximization. otherwise
+        # we're looking at a ghost so we initialize all paramerters for minimization
+        if maximizingAgentIndex == 0:
+            bestValue = -sys.maxint - 1         # smallest integer value
+            minormax = lambda x, y: max(x, y)   # want to take the max
+            minOrMaxBest = lambda v: v > beta   # if value is as good as it can get
+            getAlphaAndBeta = lambda v: (max(alpha, v), beta)  # update a and b
+        else:
+            bestValue = sys.maxint              # biggest integer value
+            minormax = lambda x, y: min(x, y)   # want to take the min
+            minOrMaxBest = lambda v: v < alpha  # if value is as good as it can get
+            getAlphaAndBeta = lambda v: (alpha, min(beta, v))  # update a and b
+
+        # recurse through all actions
+        bestAction = actions[0]                 # initialize action variable
+        for action in actions:
+            # get the child game state for the current agent in each possible direction
+            childState = gameState.generateSuccessor(maximizingAgentIndex, action)
+
+            # get the alpha beta minimaxed value from the next state for the next
+            # agent and minimize or maximize it accordingly
+            value, _ = self.alphabeta(childState, depth, nextAgentIndex, alpha, beta)
+            bestValue = minormax(bestValue, value)
+
+            # if we've found the best value so far, make sure bestAction matches
+            if value == bestValue:
+                bestAction = action
+
+            # if we've found the best value we could possibly find, just return
+            # these values because there's no point in looking any further
+            if minOrMaxBest(bestValue):
+                return bestValue, bestAction
+
+            # update alpha and beta, depending on the agent, with the best value so far
+            alpha, beta = getAlphaAndBeta(bestValue)
+
+        return bestValue, bestAction
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -246,7 +301,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         successor = gameState.generateSuccessor(0, pacActions[0]) #Pacman's first legal action
         depth = self.depth
 
-        import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         util.raiseNotDefined()
         '''
     def value(self, s):
@@ -275,6 +330,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     def probability(length):
         return 1/length
 
+
 def betterEvaluationFunction(currentGameState):
     """
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
@@ -282,9 +338,8 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    import pdb; pdb.set_trace()
+
 
 # Abbreviation
 better = betterEvaluationFunction
-
