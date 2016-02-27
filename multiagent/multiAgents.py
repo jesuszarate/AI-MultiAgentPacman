@@ -352,7 +352,46 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    return 10
+    #successorGameState = currentGameState.generatePacmanSuccessor(action)
+    newPos = currentGameState.getPacmanPosition()
+    newGhostStates = currentGameState.getGhostStates()
+
+    state = currentGameState
+
+    minInt = -sys.maxint - 1
+    maxInt = sys.maxint
+
+    gdist = minInt
+    for ghostState in newGhostStates:
+        gpos = ghostState.getPosition()
+        md = util.manhattanDistance(newPos, gpos) * -1
+
+        gdist = min(gdist, md)
+        if gpos == newPos:
+            # If the ghost is scared eat it                                
+            if ghostState.scaredTimer > 0:
+                return maxInt
+            # Otherwise avoid at all cost!                                
+            else:
+                return minInt
+
+    pdist = minInt
+    for pos in currentGameState.getFood().asList():
+        # The closer the food the smaller the manhattan distance is,
+        # so to make it larger than farther food just make it negative
+        md = util.manhattanDistance(newPos, pos) * -1
+
+        max(pdist, md)
+        
+
+    numGhost = state.getNumAgents() - 1
+    foodLeft = len(state.getFood().asList())
+    capLeft = len(state.getCapsules())
+
+    #return state.getScore() + gdist - pdist - foodLeft
+    return pdist - gdist + state.getScore() - foodLeft - capLeft
+
+
     #### does not work well...
     #avg = lambda vals: (sum(vals) * 1.0) / (len(vals) * 1.0)
     #maxInt = sys.maxint
