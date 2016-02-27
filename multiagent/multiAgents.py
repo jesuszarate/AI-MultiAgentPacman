@@ -352,88 +352,31 @@ def betterEvaluationFunction(currentGameState):
 
       DESCRIPTION: <write something here so we know what you did>
     """
-    #successorGameState = currentGameState.generatePacmanSuccessor(action)
-    newPos = currentGameState.getPacmanPosition()
-    newGhostStates = currentGameState.getGhostStates()
-
-    state = currentGameState
 
     minInt = -sys.maxint - 1
     maxInt = sys.maxint
 
-    gdist = minInt
+    pacmanPosition = currentGameState.getPacmanPosition()
+    foodPositions = currentGameState.getFood().asList()
+
+    newGhostStates = currentGameState.getGhostStates()
+    newPos = currentGameState.getPacmanPosition()
+
+    fdist = -float("inf")
+    for fpos in foodPositions:
+        md = util.manhattanDistance(newPos, fpos)
+        fdist = max(fdist, md)
+
     for ghostState in newGhostStates:
         gpos = ghostState.getPosition()
-        md = util.manhattanDistance(newPos, gpos) * -1
-
-        gdist = min(gdist, md)
-        if gpos == newPos:
-            # If the ghost is scared eat it                                
-            if ghostState.scaredTimer > 0:
-                return maxInt
-            # Otherwise avoid at all cost!                                
-            else:
-                return minInt
-
-    pdist = minInt
-    for pos in currentGameState.getFood().asList():
-        # The closer the food the smaller the manhattan distance is,
-        # so to make it larger than farther food just make it negative
-        md = util.manhattanDistance(newPos, pos) * -1
-
-        max(pdist, md)
-        
-
-    numGhost = state.getNumAgents() - 1
-    foodLeft = len(state.getFood().asList())
-    capLeft = len(state.getCapsules())
-
-    #return state.getScore() + gdist - pdist - foodLeft
-    return pdist - gdist + state.getScore() - foodLeft - capLeft
-
-
-    #### does not work well...
-    #avg = lambda vals: (sum(vals) * 1.0) / (len(vals) * 1.0)
-    #maxInt = sys.maxint
-    #minInt = -sys.maxint - 1
-    #values = []
-
-    #curPos = currentGameState.getPacmanPosition()
-    #curFood = currentGameState.getFood().asList()
-
-    #actions = currentGameState.getLegalActions(0)
-    #for action in actions:
-    #    childState = currentGameState.generatePacmanSuccessor(action)
-    #    newPos = childState.getPacmanPosition()
-    #    newGhostStates = childState.getGhostStates()
-    #    for ghostState in newGhostStates:
-    #        gpos = ghostState.getPosition()
-    #        if gpos == newPos:
-    #            # If the ghost is scared eat it
-    #            if ghostState.scaredTimer > 0:
-    #                values.append(maxInt / len(actions))
-    #             # Otherwise avoid at all cost!
-    #            else:
-    #                return minInt
-    #                #values.append(minInt / len(actions))
-
-    #    if newPos in childState.getFood().asList():
-    #        return maxInt
-    #        #values.append(maxInt / len(actions))
-
-    #curGhosts = currentGameState.getGhostStates()
-    #for ghostState in curGhosts:
-    #    gpos = ghostState.getPosition()
-    #    if gpos == curPos:
-    #        values.append(minInt)
-
-    #if curPos in curFood:
-    #    values.append(maxInt)
-
-    #if len(values) == 0:
-    #    return 0
-    #return avg(values)
-
+        gd = util.manhattanDistance(newPos, gpos)
+        if gd < 5:
+            return minInt
+    
+    caplen = len(currentGameState.getCapsules())
+    foodlen =  currentGameState.getNumFood()
+    score = currentGameState.getScore()
+    return -1 * (fdist +  (100*caplen) + (10000 *foodlen) - (100*score))
 
 
 # Abbreviation
