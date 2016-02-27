@@ -355,12 +355,14 @@ def betterEvaluationFunction(currentGameState):
 
     minInt = -sys.maxint - 1
     maxInt = sys.maxint
+    max_dist_g = 5
 
     pacmanPosition = currentGameState.getPacmanPosition()
     foodPositions = currentGameState.getFood().asList()
 
     newGhostStates = currentGameState.getGhostStates()
     newPos = currentGameState.getPacmanPosition()
+
 
     fdist = -float("inf")
     for fpos in foodPositions:
@@ -370,13 +372,14 @@ def betterEvaluationFunction(currentGameState):
     for ghostState in newGhostStates:
         gpos = ghostState.getPosition()
         gd = util.manhattanDistance(newPos, gpos)
-        if gd < 5:
+        if gd < max_dist_g:
             return minInt
     
     caplen = len(currentGameState.getCapsules())
     foodlen =  currentGameState.getNumFood()
     score = currentGameState.getScore()
     return -1 * (fdist +  (100*caplen) + (10000 *foodlen) - (100*score))
+
 
 
 # Abbreviation
